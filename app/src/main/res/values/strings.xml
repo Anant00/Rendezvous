@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Rendezvous</string>
+    <string name="image_content_description">image content description</string>
 </resources>
