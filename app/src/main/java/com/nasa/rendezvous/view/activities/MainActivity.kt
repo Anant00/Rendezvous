@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.nasa.rendezvous.R
 import com.nasa.rendezvous.model.NasaImages
+import com.nasa.rendezvous.utils.AppTheme
 import com.nasa.rendezvous.utils.DateRangeUtils
 import com.nasa.rendezvous.view.adapters.NasaImageAdapter
 import com.nasa.rendezvous.viewmode.ViewModelMain
@@ -29,11 +30,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        AppTheme.setupInsets(toolbar, recyclerView, parent_main_activity, this)
         progressBar.visibility = VISIBLE
         getDates()
         setUpViewModelMain()
         setRecyclerView()
-        getData(startDate, endDate)
+        getData(startDate, "2019-09-24")
     }
 
     private fun getDates() {
