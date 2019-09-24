@@ -60,6 +60,9 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
     kapt "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
 
+    //picasso
+    implementation "com.squareup.picasso:picasso:$picasso_version"
+
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
