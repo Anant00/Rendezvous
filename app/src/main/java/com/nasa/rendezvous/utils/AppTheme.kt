@@ -10,7 +10,7 @@ import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.RecyclerView
 
 object AppTheme {
-    fun setupInsets(toolbar: Toolbar, recyclerView: RecyclerView, parentId: View, context: Context) {
+    fun setupInsets(toolbar: Toolbar, recyclerView: RecyclerView?, parentId: View, context: Context) {
         val baseMoviesPadding = pxFromDp(10f, context)
         val toolbarHeight = toolbar.layoutParams.height
         parentId.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
@@ -18,12 +18,16 @@ object AppTheme {
 
         ViewCompat.setOnApplyWindowInsetsListener(toolbar) { _, insets ->
             toolbar.setMarginTop(insets.systemWindowInsetTop)
-            recyclerView.updatePadding(top = toolbarHeight + insets.systemWindowInsetTop + baseMoviesPadding)
+            recyclerView?.updatePadding(top = toolbarHeight + insets.systemWindowInsetTop + baseMoviesPadding)
             insets
+
+
         }
-        ViewCompat.setOnApplyWindowInsetsListener(recyclerView) { _, insets ->
-            recyclerView.updatePadding(bottom = insets.systemWindowInsetBottom)
-            insets
+        recyclerView?.let {
+            ViewCompat.setOnApplyWindowInsetsListener(it) { _, insets ->
+                recyclerView.updatePadding(bottom = insets.systemWindowInsetBottom)
+                insets
+            }
         }
     }
 

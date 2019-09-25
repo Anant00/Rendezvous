@@ -14,7 +14,7 @@ import com.nasa.rendezvous.model.NasaImages
 import com.nasa.rendezvous.utils.AppTheme
 import com.nasa.rendezvous.utils.DateRangeUtils
 import com.nasa.rendezvous.view.adapters.NasaImageAdapter
-import com.nasa.rendezvous.viewmode.ViewModelMain
+import com.nasa.rendezvous.viewmodel.ViewModelMain
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
