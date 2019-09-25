@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+        xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:orientation="vertical"
+        android:layout_margin="4dp"
+        app:cardElevation="4dp"
+        app:cardCornerRadius="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        <ImageView
+                android:contentDescription="@string/image_content_description"
+                android:id="@+id/item_recyclerViewMain_imageView"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:transitionName="image"
+                android:scaleType="centerCrop"
+                app:layout_constraintDimensionRatio="1:1"
+                android:adjustViewBounds="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+        <TextView
+                android:id="@+id/item_recyclerViewMain_tvTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/colorWhite"
+                android:textSize="19sp"
+                android:textStyle="bold"
+                android:padding="4dp"
+                android:layout_gravity="bottom"
+                android:gravity="center"
+                app:layout_constraintBottom_toBottomOf="@+id/item_recyclerViewMain_imageView"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>
