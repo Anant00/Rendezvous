@@ -49,17 +49,22 @@ class NasaImageAdapter(private var imageList: MutableList<NasaImages>?, private 
                     intentUtil = IntentUtil(imageList!!)
                     Log.d(tag, "adapter image Url: ${imageList!![position].url}")
                 }
-
             }
         }
+        ImageUtils.setImageRatio(holder.imageView)
         holder.itemView.setOnClickListener {
             onItemClick(holder)
         }
     }
 
     fun addData(newImageList: List<NasaImages>) {
+        try {
+            imageList!!.clear()
+        } catch (e: Exception) {
+
+        }
         // reverse the layout to show latest date's data first.
-        imageList?.addAll(newImageList.reversed())
+        imageList?.addAll(newImageList)
         /* use notifyItemInserted instead of notifyDataSetChanged().
             This updates whole list, we don't want that. Just notify the position where the item is inserted. It is better for performance.
          */

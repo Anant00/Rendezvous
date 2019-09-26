@@ -42,6 +42,7 @@ class LocalDatabaseRepository(var application: Application) {
     }
 
     private fun insertAllData(imageList: List<NasaImages>) {
+
         CoroutineScope(IO).launch {
             imagesDao.insertAll(imageList)
             withContext(Main) {

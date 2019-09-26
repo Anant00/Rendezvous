@@ -1,25 +1,21 @@
 package com.nasa.rendezvous.repository
 
 import android.util.Log
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.nasa.rendezvous.api.retrofitbuilder.RetrofitBuilder
 import com.nasa.rendezvous.model.NasaImages
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Dispatchers.Main
 
 object Repository {
-    var job: CompletableJob? = null
+    // var job: CompletableJob? = null
     private var compositeDisposable: CompositeDisposable = CompositeDisposable()
     private val tag = javaClass.simpleName
     private var nasaRxImages: MutableLiveData<List<NasaImages>>? = null
 
     /* 2 methods, same goal. One is using coroutines and the other is using RxJava. Both works.
-     */
+
     fun getImages(startDate: String, endDate: String): LiveData<List<NasaImages>> {
         job = Job()
         val service = RetrofitBuilder.apiServiceResponse()
@@ -50,6 +46,7 @@ object Repository {
     fun cancerJob() {
         job?.cancel()
     }
+    */
 
     fun getRxImages(startDate: String, endDate: String): MutableLiveData<List<NasaImages>>? {
         nasaRxImages = MutableLiveData()

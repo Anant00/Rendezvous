@@ -1,5 +1,6 @@
 package com.nasa.rendezvous.view.activities
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View.GONE
@@ -7,22 +8,26 @@ import android.view.View.VISIBLE
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.nasa.rendezvous.R
 import com.nasa.rendezvous.model.NasaImages
 import com.nasa.rendezvous.utils.AppTheme
 import com.nasa.rendezvous.utils.DateRangeUtils
 import com.nasa.rendezvous.view.adapters.NasaImageAdapter
+import com.nasa.rendezvous.viewmodel.DatabaseViewModel
 import com.nasa.rendezvous.viewmodel.ViewModelMain
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: ViewModelMain
-    private lateinit var staggeredGridLayoutManager: StaggeredGridLayoutManager
+    private lateinit var linearLayoutManager: LinearLayoutManager
     private lateinit var nasaImageAdapter: NasaImageAdapter
     private val tag = javaClass.simpleName
     private lateinit var startDate: String
+    private lateinit var databaseViewModel: DatabaseViewModel
     private lateinit var endDate: String
     private lateinit var images: MutableList<NasaImages>
 
@@ -33,6 +38,8 @@ class MainActivity : AppCompatActivity() {
     var firstVisibleItem: Int = 0
     private var previousTotal = 0
     private var loading = true
+    private lateinit var sharedPreferences: SharedPreferences
+    private lateinit var sharedPrefEditor: SharedPreferences.Editor
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,11 +48,29 @@ class MainActivity : AppCompatActivity() {
 
         AppTheme.setupInsets(toolbar, recyclerView, parent_main_activity, this)
         progressBar.visibility = VISIBLE
+        setSharedPref()
         getDates()
         setUpViewModelMain()
         setRecyclerView()
-        getData(startDate, endDate)
+
+        /* isDatabaseAvailable() checks whether the data is available from the database, if it is available, show the data.
+         if not, fetch from the api store it the local database and then show it.
+         Whether the internet is available or not, does not matter in out case because api should not be called again for already seen data
+         even when the internet is available.
+
+         NOTE: All the data will be stored in database no matter up to which page user scrolls. IT might result in large app cache size.
+
+         */
+        isDatabaseAvailable(startDate, endDate)
         onScrollLoadMoreData()
+
+    }
+
+    private fun setSharedPref() {
+        sharedPreferences = getSharedPreferences(
+            "latestDates",
+            MODE_PRIVATE
+        )
     }
 
     private fun getDates() {
@@ -56,6 +81,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setUpViewModelMain() {
         viewModel = ViewModelProviders.of(this).get(ViewModelMain::class.java)
+        databaseViewModel = ViewModelProviders.of(this).get(DatabaseViewModel(application)::class.java)
     }
 
     private fun getData(startDate: String, endDate: String) {
@@ -65,28 +91,21 @@ class MainActivity : AppCompatActivity() {
                 progressBar.visibility = GONE
                 println(imageList[0].url)
                 for (images in imageList) {
-                    if (images.mediaType != "vi" +
-                        "deo"
-                    ) {
+                    if (images.mediaType != "video") {
                         this.images.add(images)
-
                     }
                 }
-                nasaImageAdapter.addData(this.images)
+                databaseViewModel.insert(this.images)
+                Log.d(tag, "inserted data size: ${images.size}")
                 progressBar.visibility = GONE
-
             }
         })
     }
 
     private fun setRecyclerView() {
-        staggeredGridLayoutManager = StaggeredGridLayoutManager(
-            2,
-            StaggeredGridLayoutManager.VERTICAL
-        )
-        staggeredGridLayoutManager.gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
-        recyclerView.layoutManager = staggeredGridLayoutManager
-        recyclerView.setItemViewCacheSize(20)
+        linearLayoutManager = LinearLayoutManager(this)
+        recyclerView.layoutManager = linearLayoutManager
+        recyclerView.setItemViewCacheSize(50)
         nasaImageAdapter = NasaImageAdapter(arrayListOf(), this)
         recyclerView.adapter = nasaImageAdapter
     }
@@ -95,8 +114,8 @@ class MainActivity : AppCompatActivity() {
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 visibleItemCount = recyclerView.childCount
-                totalItemCount = staggeredGridLayoutManager.itemCount
-                firstVisibleItem = staggeredGridLayoutManager.findFirstCompletelyVisibleItemPositions(null)[0]
+                totalItemCount = linearLayoutManager.itemCount
+                firstVisibleItem = linearLayoutManager.findFirstCompletelyVisibleItemPosition()
                 if (loading) {
                     if (totalItemCount > previousTotal) {
                         loading = false
@@ -104,14 +123,15 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
-                    // get the new start data and new end date
+                    // get the new start data and new end date.
+                    startDate = sharedPreferences.getString("start date", startDate)!!
+                    endDate = sharedPreferences.getString("end date", endDate)!!
                     val (newStartDate, newEndDate) = DateRangeUtils.updateDate(startDate)
                     Log.d(tag, "newStartDate: $newStartDate , newEndDate $newEndDate")
                     loadMoreData(newStartDate, newEndDate)
                     loading = true
                 }
             }
-
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
             }
         })
@@ -126,16 +146,54 @@ class MainActivity : AppCompatActivity() {
                     this.images.add(images)
                 }
             }
-            // pass the newly fetched data to adapter
-            nasaImageAdapter.addData(this.images)
+            images
+            databaseViewModel.insert(images)
             Log.d(tag, "success on load more ${images.size}")
             progressBar_loadMore.visibility = GONE
-
             // update dates to pass for next loadMoreData
             this.startDate = startDate
             this.endDate = endDate
 
+            /* storing data in sharedPref so that when user recyclerView is at the bottom of screen, it should pass the date till the data
+                has been fetched. Not required when fetching data just from api. But, when the app is killed, and if the app has data in local storage,
+                using getDateToday() will return today's date, which in turn fetch the duplicate data and insert it at the bottom of the reyclerview.
+                using sharedPref we are storing the date to which user has scrolled and saved the data, so that when next time user opens the app,
+                it should fetch from that date and not today's date.
+             */
+            sharedPrefEditor = sharedPreferences.edit()
+            sharedPrefEditor.putString("start date", startDate)
+            sharedPrefEditor.putString("end date", endDate)
+            sharedPrefEditor.apply()
         })
+    }
+
+    private fun isDatabaseAvailable(startDate: String, endDate: String) {
+        databaseViewModel.getDataFromDatabase()?.let {
+            databaseViewModel.getDataFromDatabase()!!.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    { list ->
+                        if (!list.isNullOrEmpty()) {
+                            Log.d(tag, "data is not null, fetching from database ${list.size}")
+
+                            /* this is the only place where the data should be sent recyclerView adapter. getDataFromDatabase() returns flowable
+                               which gets updated whenever there is a change in local database.
+                               Calling it again wherever the data is inserted in local storage to update the recyclerView will result performance issue.
+                             */
+                            nasaImageAdapter.addData(list)
+                            progressBar.visibility = GONE
+                        } else {
+                            Log.d(tag, "database is null, fetching from api and saving it")
+                            getData(startDate, endDate)
+                            Log.d(tag, "onRead Success: ${list.size}")
+                        }
+                        Log.d(tag, "from database----->\n$it")
+                    },
+                    { error ->
+                        Log.e(tag, " $error.message")
+                    }
+                )
+        }
     }
 
     override fun onDestroy() {
