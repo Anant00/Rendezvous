@@ -17,7 +17,7 @@ interface ImagesDao {
     @Query("DELETE FROM images")
     fun deleteAll()
 
-    @Query("SELECT * FROM images ")
+    @Query("SELECT * FROM images ORDER BY date DESC")
     fun getAllImagesFromDatabase(): Flowable<List<NasaImages>>
 
     @Query("SELECT * FROM images ORDER BY date DESC LIMIT 1")

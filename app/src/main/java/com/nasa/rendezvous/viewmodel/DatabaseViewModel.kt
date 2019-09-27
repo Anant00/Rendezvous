@@ -8,7 +8,7 @@ import com.nasa.rendezvous.repository.localrepository.LocalDatabaseRepository
 import io.reactivex.Flowable
 
 class DatabaseViewModel(application: Application) : AndroidViewModel(application) {
-    var databaseRepository = LocalDatabaseRepository(application)
+    private var databaseRepository = LocalDatabaseRepository()
 
     fun insert(imageList: List<NasaImages>) {
         databaseRepository.insert(imageList.reversed())
@@ -16,10 +16,6 @@ class DatabaseViewModel(application: Application) : AndroidViewModel(application
 
     fun delete() {
         databaseRepository.deleteAll()
-    }
-
-    fun checkIfDatabaseIsUpdated(): List<NasaImages> {
-        return databaseRepository.checkIfDatabaseIsUpdate()
     }
 
     fun getDataFromDatabase(): Flowable<List<NasaImages>>? {

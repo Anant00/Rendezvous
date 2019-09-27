@@ -61,14 +61,12 @@ class NasaImageAdapter(private var imageList: MutableList<NasaImages>?, private 
         try {
             imageList!!.clear()
         } catch (e: Exception) {
-
+            Log.e(tag, e.printStackTrace().toString())
         }
-        // reverse the layout to show latest date's data first.
         imageList?.addAll(newImageList)
-        /* use notifyItemInserted instead of notifyDataSetChanged().
-            This updates whole list, we don't want that. Just notify the position where the item is inserted. It is better for performance.
-         */
+
         notifyItemInserted(imageList!!.size - 1)
+        notifyDataSetChanged()
         Log.d(tag, "new list size: ${newImageList.size}")
     }
 

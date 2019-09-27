@@ -11,12 +11,14 @@ import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.nasa.rendezvous.R
+import com.nasa.rendezvous.application.App
 import com.nasa.rendezvous.model.NasaImages
 import com.nasa.rendezvous.utils.AppTheme
 import com.nasa.rendezvous.utils.DateRangeUtils
 import com.nasa.rendezvous.view.adapters.NasaImageAdapter
 import com.nasa.rendezvous.viewmodel.DatabaseViewModel
 import com.nasa.rendezvous.viewmodel.ViewModelMain
+import com.squareup.leakcanary.RefWatcher
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
@@ -27,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var nasaImageAdapter: NasaImageAdapter
     private val tag = javaClass.simpleName
     private lateinit var startDate: String
+    private var refWatcher: RefWatcher? = null
     private lateinit var databaseViewModel: DatabaseViewModel
     private lateinit var endDate: String
     private lateinit var images: MutableList<NasaImages>
@@ -46,13 +49,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        refWatcher = App.getRefWatcher(this)
         AppTheme.setupInsets(toolbar, recyclerView, parent_main_activity, this)
         progressBar.visibility = VISIBLE
         setSharedPref()
-        getDates()
         setUpViewModelMain()
         setRecyclerView()
-
+        getDates()
         /* isDatabaseAvailable() checks whether the data is available from the database, if it is available, show the data.
          if not, fetch from the api store it the local database and then show it.
          Whether the internet is available or not, does not matter in out case because api should not be called again for already seen data
@@ -71,12 +74,16 @@ class MainActivity : AppCompatActivity() {
             "latestDates",
             MODE_PRIVATE
         )
+        sharedPrefEditor = sharedPreferences.edit()
+        sharedPrefEditor.apply()
     }
 
     private fun getDates() {
         // fetching previous 15+1 days data.
         startDate = DateRangeUtils.getDaysBackDate(15)
         endDate = DateRangeUtils.getTodayDate()
+        sharedPrefEditor.putString("last end date", endDate)
+        sharedPrefEditor.apply()
     }
 
     private fun setUpViewModelMain() {
@@ -95,9 +102,9 @@ class MainActivity : AppCompatActivity() {
                         this.images.add(images)
                     }
                 }
-                databaseViewModel.insert(this.images)
                 Log.d(tag, "inserted data size: ${images.size}")
                 progressBar.visibility = GONE
+                databaseViewModel.insert(this.images)
             }
         })
     }
@@ -176,12 +183,20 @@ class MainActivity : AppCompatActivity() {
                         if (!list.isNullOrEmpty()) {
                             Log.d(tag, "data is not null, fetching from database ${list.size}")
 
+                            if (shouldUpdateData()) {
+                                val lastEndDate = sharedPreferences.getString("last end date", endDate)
+                                Log.d(tag, "updating $lastEndDate")
+                                getData(lastEndDate!!, DateRangeUtils.getTodayDate())
+                                sharedPrefEditor.putString("last end date", DateRangeUtils.getTodayDate())
+                                sharedPrefEditor.apply()
+                            }
                             /* this is the only place where the data should be sent recyclerView adapter. getDataFromDatabase() returns flowable
                                which gets updated whenever there is a change in local database.
                                Calling it again wherever the data is inserted in local storage to update the recyclerView will result performance issue.
                              */
                             nasaImageAdapter.addData(list)
                             progressBar.visibility = GONE
+
                         } else {
                             Log.d(tag, "database is null, fetching from api and saving it")
                             getData(startDate, endDate)
@@ -196,9 +211,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     override fun onDestroy() {
         super.onDestroy()
+        refWatcher?.watch(this)
         viewModel.clearDisposable()
     }
+
+
+    /* this method checks whether the database should be updated  and fetch new data.
+        It is used in the case where a user opens app after some days. In these cases, the database should  be updated from last end date to current date.
+     */
+    private fun shouldUpdateData(): Boolean {
+        var isUpdateNeeded = false
+        val lastEndDate = sharedPreferences.getString("last end date", endDate)
+        Log.d(tag, "ïnside should $lastEndDate")
+        if (lastEndDate != DateRangeUtils.getTodayDate()) {
+            isUpdateNeeded = true
+        }
+        Log.d(tag, "is update needed $lastEndDate $isUpdateNeeded")
+        return isUpdateNeeded
+    }
+
 
 }

@@ -63,6 +63,9 @@ dependencies {
     //picasso
     implementation "com.squareup.picasso:picasso:$picasso_version"
 
+    //leak canary
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
+
     //pichtozoom support
     implementation 'com.bogdwellers:pinchtozoom:0.1'
 

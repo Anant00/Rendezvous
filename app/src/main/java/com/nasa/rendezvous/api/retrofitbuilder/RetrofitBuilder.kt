@@ -33,8 +33,4 @@ object RetrofitBuilder {
         retrofitBuilder.build()
             .create(ApiService::class.java)
     }
-
-    fun apiServiceResponse(): ApiService {
-        return apiService
-    }
 }

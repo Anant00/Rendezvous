@@ -18,6 +18,7 @@ import com.nasa.rendezvous.utils.AppTheme
 import com.nasa.rendezvous.utils.ImageUtils
 import com.nasa.rendezvous.utils.IntentUtil
 import com.nasa.rendezvous.view.adapters.SingleImageAdapter
+import com.squareup.leakcanary.RefWatcher
 import kotlinx.android.synthetic.main.singleimagedetail_activity.*
 
 
@@ -27,6 +28,7 @@ class SingleImageDetailsActivity : AppCompatActivity() {
     private lateinit var bottomSheetDialog: BottomSheetDialog
     private var position = 0
     private lateinit var singleImageAdapter: SingleImageAdapter
+    private var refWatcher: RefWatcher? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,6 +119,7 @@ class SingleImageDetailsActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        refWatcher?.watch(this)
         try {
             bottomSheetDialog.dismiss()
         } catch (e: Exception) {
