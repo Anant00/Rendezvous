@@ -15,19 +15,21 @@ import com.nasa.rendezvous.application.App
 import com.nasa.rendezvous.model.NasaImages
 import com.nasa.rendezvous.utils.AppTheme
 import com.nasa.rendezvous.utils.DateRangeUtils
+import com.nasa.rendezvous.utils.ImageUtils
 import com.nasa.rendezvous.view.adapters.NasaImageAdapter
 import com.nasa.rendezvous.viewmodel.DatabaseViewModel
 import com.nasa.rendezvous.viewmodel.ViewModelMain
 import com.squareup.leakcanary.RefWatcher
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
+    private val tag = javaClass.simpleName
     private lateinit var viewModel: ViewModelMain
     private lateinit var linearLayoutManager: LinearLayoutManager
     private lateinit var nasaImageAdapter: NasaImageAdapter
-    private val tag = javaClass.simpleName
     private lateinit var startDate: String
     private var refWatcher: RefWatcher? = null
     private lateinit var databaseViewModel: DatabaseViewModel
@@ -43,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private var loading = true
     private lateinit var sharedPreferences: SharedPreferences
     private lateinit var sharedPrefEditor: SharedPreferences.Editor
+    private lateinit var subscription: Disposable
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -122,7 +125,7 @@ class MainActivity : AppCompatActivity() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 visibleItemCount = recyclerView.childCount
                 totalItemCount = linearLayoutManager.itemCount
-                firstVisibleItem = linearLayoutManager.findFirstCompletelyVisibleItemPosition()
+                firstVisibleItem = linearLayoutManager.findFirstVisibleItemPosition()
                 if (loading) {
                     if (totalItemCount > previousTotal) {
                         loading = false
@@ -176,7 +179,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun isDatabaseAvailable(startDate: String, endDate: String) {
         databaseViewModel.getDataFromDatabase()?.let {
-            databaseViewModel.getDataFromDatabase()!!.subscribeOn(Schedulers.io())
+            subscription = databaseViewModel.getDataFromDatabase()!!.subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { list ->
@@ -210,18 +213,9 @@ class MainActivity : AppCompatActivity() {
                 )
         }
     }
-
-
-    override fun onDestroy() {
-        super.onDestroy()
-        refWatcher?.watch(this)
-        viewModel.clearDisposable()
-    }
-
-
     /* this method checks whether the database should be updated  and fetch new data.
-        It is used in the case where a user opens app after some days. In these cases, the database should  be updated from last end date to current date.
-     */
+       It is used in the case where a user opens app after some days. In these cases, the database should  be updated from last end date to current date.
+    */
     private fun shouldUpdateData(): Boolean {
         var isUpdateNeeded = false
         val lastEndDate = sharedPreferences.getString("last end date", endDate)
@@ -233,5 +227,14 @@ class MainActivity : AppCompatActivity() {
         return isUpdateNeeded
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        refWatcher?.watch(this)
+        if (!subscription.isDisposed) {
+            subscription.dispose()
+        }
+        ImageUtils.cancelPicasso(tag)
+        viewModel.clearDisposable()
 
+    }
 }

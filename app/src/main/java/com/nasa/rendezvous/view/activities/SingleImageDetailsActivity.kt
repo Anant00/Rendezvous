@@ -107,7 +107,7 @@ class SingleImageDetailsActivity : AppCompatActivity() {
             btmSheetCopyRight.visibility = View.GONE
         }
         getData()?.get(position)?.url?.let {
-            ImageUtils.showImage(it, btmImageView)
+            ImageUtils.showImage(it, btmImageView, tag)
         }
         bottomSheetDialog.show()
     }
@@ -125,5 +125,6 @@ class SingleImageDetailsActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(tag, "bottomSheet ex. ${e.localizedMessage}")
         }
+        ImageUtils.cancelPicasso(tag)
     }
 }

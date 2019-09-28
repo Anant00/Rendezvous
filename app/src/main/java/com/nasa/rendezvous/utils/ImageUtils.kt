@@ -9,14 +9,14 @@ import com.squareup.picasso.Picasso
 
 object ImageUtils {
 
-    fun showImage(url: String, imageView: ImageView) {
-        Picasso.get().load(url).networkPolicy(NetworkPolicy.OFFLINE).into(imageView, object : Callback {
+    fun showImage(url: String, imageView: ImageView, tag: String) {
+        Picasso.get().load(url).networkPolicy(NetworkPolicy.OFFLINE).tag(tag).into(imageView, object : Callback {
             override fun onSuccess() {
 
             }
 
             override fun onError(e: Exception?) {
-                Picasso.get().load(url).into(imageView)
+                Picasso.get().load(url).tag(tag).into(imageView)
             }
         })
     }
@@ -26,5 +26,9 @@ object ImageUtils {
         val layoutParams: ConstraintLayout.LayoutParams = ConstraintLayout.LayoutParams(imageView.layoutParams)
         layoutParams.height = (height * 25) / 100
         imageView.layoutParams = layoutParams
+    }
+
+    fun cancelPicasso(tag: String) {
+        Picasso.get().cancelTag(tag)
     }
 }

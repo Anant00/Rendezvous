@@ -29,7 +29,7 @@ class SingleImageAdapter(private var context: Context, private var imageList: Li
         val imageView = itemView.imageView_single
 
         imageList[position].url?.let {
-            ImageUtils.showImage(it, imageView)
+            ImageUtils.showImage(it, imageView, context.javaClass.simpleName)
             imageView.setOnTouchListener(ImageMatrixTouchHandler(context))
             container.addView(itemView)
         }

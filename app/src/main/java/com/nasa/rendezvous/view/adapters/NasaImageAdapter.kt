@@ -45,7 +45,7 @@ class NasaImageAdapter(private var imageList: MutableList<NasaImages>?, private 
             imageList!![position].url?.let {
                 if (!imageList!![position].title.equals("")) {
                     holder.title.text = imageList!![position].title
-                    ImageUtils.showImage(it, holder.imageView)
+                    ImageUtils.showImage(it, holder.imageView, activity.javaClass.simpleName)
                     intentUtil = IntentUtil(imageList!!)
                     Log.d(tag, "adapter image Url: ${imageList!![position].url}")
                 }
