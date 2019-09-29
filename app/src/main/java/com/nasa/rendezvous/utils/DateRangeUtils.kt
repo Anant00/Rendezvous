@@ -41,5 +41,4 @@ object DateRangeUtils {
     }
 
     data class DateObj(var startDate: String, var endDate: String)
-
 }
