@@ -35,7 +35,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var databaseViewModel: DatabaseViewModel
     private lateinit var endDate: String
     private lateinit var images: MutableList<NasaImages>
-
     // onScrollLoadMore variables
     var visibleItemCount: Int = 0
     var totalItemCount: Int = 0
@@ -58,14 +57,15 @@ class MainActivity : AppCompatActivity() {
         setUpViewModelMain()
         setRecyclerView()
         getDates()
+
         /* isDatabaseAvailable() checks whether the data is available from the database, if it is available, show the data.
          if not, fetch from the api store it the local database and then show it.
          Whether the internet is available or not, does not matter in out case because api should not be called again for already seen data
          even when the internet is available.
 
          NOTE: All the data will be stored in database no matter up to which page user scrolls. IT might result in large app cache size.
-
          */
+
         isDatabaseAvailable(startDate, endDate)
         onScrollLoadMoreData()
 
@@ -84,7 +84,6 @@ class MainActivity : AppCompatActivity() {
         // fetching previous 15+1 days data.
         startDate = DateRangeUtils.getDaysBackDate(15)
         endDate = DateRangeUtils.getTodayDate()
-        endDate = "2019-09-28"
     }
 
     private fun setUpViewModelMain() {
@@ -106,6 +105,8 @@ class MainActivity : AppCompatActivity() {
                 Log.d(tag, "inserted data size: ${images.size}")
                 progressBar.visibility = GONE
                 databaseViewModel.insert(this.images)
+                sharedPrefEditor.putString("last end date", DateRangeUtils.getTodayDate())
+                sharedPrefEditor.apply()
             }
         })
     }
@@ -164,13 +165,13 @@ class MainActivity : AppCompatActivity() {
 
             /* storing data in sharedPref so that when user recyclerView is at the bottom of screen, it should pass the date till the data
                 has been fetched. Not required when fetching data just from api. But, when the app is killed, and if the app has data in local storage,
-                using getDateToday() will return today's date, which in turn fetch the duplicate data and insert it at the bottom of the reyclerview.
+                using getDateToday() will return today's date, which in turn fetch the duplicate data and insert it at the bottom of the recyclerView.
                 using sharedPref we are storing the date to which user has scrolled and saved the data, so that when next time user opens the app,
                 it should fetch from that date and not today's date.
              */
             sharedPrefEditor = sharedPreferences.edit()
             sharedPrefEditor.putString("start date", startDate)
-            sharedPrefEditor.putString("end date", endDate)
+            sharedPrefEditor.putString("end date", "2019-09-28")
             sharedPrefEditor.apply()
         })
     }
@@ -188,10 +189,8 @@ class MainActivity : AppCompatActivity() {
                                 val lastEndDate = sharedPreferences.getString("last end date", endDate)
                                 Log.d(tag, "updating $lastEndDate")
                                 getData(lastEndDate!!, DateRangeUtils.getTodayDate())
-                                sharedPrefEditor.putString("last end date", endDate)
-                                sharedPrefEditor.apply()
                             }
-                            /* this is the only place where the data should be sent recyclerView adapter. getDataFromDatabase() returns flowable
+                            /* this is the only place where the data should be sent recyclerView adapter. getDataFromDatabase() returns flowAble
                                which gets updated whenever there is a change in local database.
                                Calling it again wherever the data is inserted in local storage to update the recyclerView will result performance issue.
                              */
@@ -201,9 +200,6 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             Log.d(tag, "database is null, fetching from api and saving it")
                             getData(startDate, endDate)
-                            sharedPrefEditor.putString("last end date", endDate)
-                            sharedPrefEditor.apply()
-                            Log.d(tag, "onRead Success: ${list.size}")
                         }
                         Log.d(tag, "from database----->\n$it")
                     },
@@ -213,17 +209,18 @@ class MainActivity : AppCompatActivity() {
                 )
         }
     }
+
     /* this method checks whether the database should be updated  and fetch new data.
        It is used in the case where a user opens app after some days. In these cases, the database should  be updated from last end date to current date.
     */
     private fun shouldUpdateData(): Boolean {
         var isUpdateNeeded = false
         val lastEndDate = sharedPreferences.getString("last end date", endDate)
-        Log.d(tag, "ïnside should $lastEndDate")
+        Log.d(tag, "inside should $lastEndDate")
         if (lastEndDate != DateRangeUtils.getTodayDate()) {
             isUpdateNeeded = true
         }
-        Log.d(tag, "is update needed $lastEndDate $isUpdateNeeded")
+        Log.d(tag, "is update needed $lastEndDate $endDate $isUpdateNeeded")
         return isUpdateNeeded
     }
 
@@ -235,6 +232,5 @@ class MainActivity : AppCompatActivity() {
         }
         ImageUtils.cancelPicasso(tag)
         viewModel.clearDisposable()
-
     }
 }
