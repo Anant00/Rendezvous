@@ -51,7 +51,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         refWatcher = App.getRefWatcher(this)
         AppTheme.setupInsets(toolbar, recyclerView, parent_main_activity, this)
         progressBar.visibility = VISIBLE
@@ -85,8 +84,7 @@ class MainActivity : AppCompatActivity() {
         // fetching previous 15+1 days data.
         startDate = DateRangeUtils.getDaysBackDate(15)
         endDate = DateRangeUtils.getTodayDate()
-        sharedPrefEditor.putString("last end date", endDate)
-        sharedPrefEditor.apply()
+        endDate = "2019-09-28"
     }
 
     private fun setUpViewModelMain() {
@@ -183,14 +181,14 @@ class MainActivity : AppCompatActivity() {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     { list ->
+
                         if (!list.isNullOrEmpty()) {
                             Log.d(tag, "data is not null, fetching from database ${list.size}")
-
                             if (shouldUpdateData()) {
                                 val lastEndDate = sharedPreferences.getString("last end date", endDate)
                                 Log.d(tag, "updating $lastEndDate")
                                 getData(lastEndDate!!, DateRangeUtils.getTodayDate())
-                                sharedPrefEditor.putString("last end date", DateRangeUtils.getTodayDate())
+                                sharedPrefEditor.putString("last end date", endDate)
                                 sharedPrefEditor.apply()
                             }
                             /* this is the only place where the data should be sent recyclerView adapter. getDataFromDatabase() returns flowable
@@ -203,12 +201,14 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             Log.d(tag, "database is null, fetching from api and saving it")
                             getData(startDate, endDate)
+                            sharedPrefEditor.putString("last end date", endDate)
+                            sharedPrefEditor.apply()
                             Log.d(tag, "onRead Success: ${list.size}")
                         }
                         Log.d(tag, "from database----->\n$it")
                     },
                     { error ->
-                        Log.e(tag, " $error.message")
+                        Log.e(tag, " ${error.message}")
                     }
                 )
         }

@@ -25,4 +25,5 @@ class DatabaseViewModel(application: Application) : AndroidViewModel(application
             }
         }
     }
+
 }
