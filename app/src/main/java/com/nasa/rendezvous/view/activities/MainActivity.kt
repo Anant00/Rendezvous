@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity() {
              */
             sharedPrefEditor = sharedPreferences.edit()
             sharedPrefEditor.putString("start date", startDate)
-            sharedPrefEditor.putString("end date", "2019-09-28")
+            sharedPrefEditor.putString("end date", endDate)
             sharedPrefEditor.apply()
         })
     }
