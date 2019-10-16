@@ -1,11 +1,13 @@
 package com.nasa.rendezvous.view.activities
 
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityOptionsCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,6 +18,7 @@ import com.nasa.rendezvous.model.NasaImages
 import com.nasa.rendezvous.utils.AppTheme
 import com.nasa.rendezvous.utils.DateRangeUtils
 import com.nasa.rendezvous.utils.ImageUtils
+import com.nasa.rendezvous.utils.IntentUtil
 import com.nasa.rendezvous.view.adapters.NasaImageAdapter
 import com.nasa.rendezvous.viewmodel.DatabaseViewModel
 import com.nasa.rendezvous.viewmodel.ViewModelMain
@@ -25,7 +28,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NasaImageAdapter.OnAdapterItemClick {
     private val tag = javaClass.simpleName
     private lateinit var viewModel: ViewModelMain
     private lateinit var linearLayoutManager: LinearLayoutManager
@@ -114,7 +117,8 @@ class MainActivity : AppCompatActivity() {
     private fun setRecyclerView() {
         linearLayoutManager = LinearLayoutManager(this)
         recyclerView.layoutManager = linearLayoutManager
-        recyclerView.setItemViewCacheSize(50)
+        recyclerView.setItemViewCacheSize(20)
+        recyclerView.setHasFixedSize(true)
         nasaImageAdapter = NasaImageAdapter(arrayListOf(), this)
         recyclerView.adapter = nasaImageAdapter
     }
@@ -155,7 +159,6 @@ class MainActivity : AppCompatActivity() {
                     this.images.add(images)
                 }
             }
-            images
             databaseViewModel.insert(images)
             Log.d(tag, "success on load more ${images.size}")
             progressBar_loadMore.visibility = GONE
@@ -222,6 +225,17 @@ class MainActivity : AppCompatActivity() {
         }
         Log.d(tag, "is update needed $lastEndDate $endDate $isUpdateNeeded")
         return isUpdateNeeded
+    }
+
+    override fun onItemClick(position: Int, viewHolder: NasaImageAdapter.ViewHolder) {
+        val intent = Intent(this, SingleImageDetailsActivity::class.java)
+        val intentUtil = IntentUtil(nasaImageAdapter.getData()!!)
+        intent.putExtra("list", intentUtil)
+        intent.putExtra("position", position)
+        val options = ActivityOptionsCompat.makeScaleUpAnimation(
+            viewHolder.imageView, 0, 0, viewHolder.imageView.width, viewHolder.imageView.height
+        ).toBundle()
+        startActivity(intent, options)
     }
 
     override fun onDestroy() {

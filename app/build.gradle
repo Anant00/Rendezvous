@@ -17,13 +17,12 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-    //for parceling.
     androidExtensions {
         experimental = true
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -46,7 +45,7 @@ dependencies {
     // room library for local storage
     implementation "androidx.room:room-runtime:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
-    // optional - Kotlin Extensions and Coroutines support for Room
+    // optional - Kotlin Extensions  support for Room
     implementation "androidx.room:room-ktx:$room_version"
     // optional - RxJava support for Room
     implementation "androidx.room:room-rxjava2:$room_version"
@@ -54,7 +53,7 @@ dependencies {
     // RxJava libs
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.10'
-    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.6.2'
 
     // for arch components.. viewModel and live data
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
@@ -64,7 +63,7 @@ dependencies {
     implementation "com.squareup.picasso:picasso:$picasso_version"
 
     //leak canary
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.5.4'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.6.1'
 
     //pichtozoom support
     implementation 'com.bogdwellers:pinchtozoom:0.1'
